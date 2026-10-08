@@ -1,0 +1,1988 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover" />
+    <title>Happy Birthday Mom — A 3D Surprise</title>
+    <meta name="description" content="A 3D birthday surprise website." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Nunito:wght@400;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --plum-dark: #2a1034;
+        --plum-light: #4a1d5c;
+        --gold: #ffb627;
+        --rose: #ff5c8a;
+        --teal: #3ddbc0;
+        --cream: #fff3da;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body,
+      #root {
+        height: 100%;
+      }
+
+      body {
+        margin: 0;
+        background: linear-gradient(160deg, var(--plum-dark), var(--plum-light));
+        font-family: "Nunito", system-ui, sans-serif;
+        color: var(--cream);
+        overflow: hidden;
+      }
+
+      .app-root {
+        position: relative;
+        width: 100vw;
+        height: 100dvh;
+        overflow: hidden;
+        background: linear-gradient(160deg, var(--plum-dark), var(--plum-light));
+        touch-action: pan-y;
+      }
+
+      .canvas-container {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+      }
+
+      .canvas-container canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+
+      /* ---------- Loading ---------- */
+
+      .loading-screen {
+        position: absolute;
+        inset: 0;
+        z-index: 5;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        background: linear-gradient(160deg, var(--plum-dark), var(--plum-light));
+        color: var(--cream);
+        font-weight: 600;
+      }
+
+      .loading-spark {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        border: 4px solid rgba(255, 182, 39, 0.25);
+        border-top-color: var(--gold);
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* ---------- Fallback (no WebGL) ---------- */
+
+      .fallback-screen {
+        position: absolute;
+        inset: 0;
+        z-index: 5;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 1.25rem;
+        overflow-y: auto;
+        background:
+          radial-gradient(circle at 20% 20%, rgba(255, 182, 39, 0.18), transparent 45%),
+          radial-gradient(circle at 80% 30%, rgba(255, 92, 138, 0.18), transparent 45%),
+          radial-gradient(circle at 50% 85%, rgba(61, 219, 192, 0.15), transparent 45%),
+          linear-gradient(160deg, var(--plum-dark), var(--plum-light));
+      }
+
+      .fallback-inner {
+        max-width: 560px;
+        width: 100%;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1.25rem;
+      }
+
+      .fallback-nav {
+        display: flex;
+        gap: 1rem;
+        margin-top: 0.5rem;
+      }
+
+      .fallback-nav .btn-round {
+        position: static;
+        transform: none;
+      }
+
+      /* ---------- Overlay UI ---------- */
+
+      .overlay-ui {
+        position: absolute;
+        inset: 0;
+        z-index: 4;
+        pointer-events: none;
+      }
+
+      .text-panel {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        min-height: 46%;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        align-items: center;
+        padding: 1.5rem 1.25rem calc(1.5rem + env(safe-area-inset-bottom, 0px));
+        background: linear-gradient(
+          to top,
+          rgba(16, 6, 22, 0.92) 0%,
+          rgba(16, 6, 22, 0.72) 45%,
+          rgba(16, 6, 22, 0.15) 85%,
+          transparent 100%
+        );
+        pointer-events: none;
+        perspective: 900px;
+      }
+
+      .text-inner {
+        pointer-events: auto;
+        max-width: 640px;
+        width: 100%;
+        text-align: center;
+        animation: textIn 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+        transform-style: preserve-3d;
+      }
+
+      @keyframes textIn {
+        from {
+          opacity: 0;
+          transform: translateY(26px) rotateX(-22deg);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) rotateX(0deg);
+        }
+      }
+
+      .slide-title {
+        font-family: "Bagel Fat One", "Nunito", cursive;
+        font-size: clamp(1.6rem, 6vw, 3rem);
+        line-height: 1.15;
+        margin: 0 0 0.6rem;
+        color: var(--gold);
+        letter-spacing: 0.5px;
+        text-shadow:
+          1px 1px 0 #c9780f,
+          2px 2px 0 #c9780f,
+          3px 3px 0 #a85f08,
+          4px 4px 0 #a85f08,
+          5px 5px 10px rgba(0, 0, 0, 0.55),
+          0 0 26px rgba(255, 182, 39, 0.35);
+      }
+
+      .slide-text {
+        font-family: "Nunito", sans-serif;
+        font-weight: 600;
+        font-size: clamp(0.95rem, 2.6vw, 1.2rem);
+        line-height: 1.5;
+        margin: 0 auto 1rem;
+        max-width: 46ch;
+        color: #fff6ea;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.55);
+      }
+
+      .slide-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        justify-content: center;
+        margin-bottom: 1rem;
+      }
+
+      .btn-primary {
+        font-family: "Nunito", sans-serif;
+        font-weight: 800;
+        font-size: clamp(0.85rem, 2.2vw, 1rem);
+        color: #2a1034;
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 999px;
+        cursor: pointer;
+        background: linear-gradient(135deg, var(--gold), var(--rose));
+        box-shadow: 0 6px 18px rgba(255, 92, 138, 0.35), 0 0 0 2px rgba(255, 255, 255, 0.15) inset;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+      }
+
+      .btn-primary:hover:not(:disabled) {
+        transform: translateY(-2px) scale(1.03);
+        box-shadow: 0 10px 22px rgba(255, 92, 138, 0.45), 0 0 0 2px rgba(255, 255, 255, 0.25) inset;
+      }
+
+      .btn-primary:active:not(:disabled) {
+        transform: translateY(0) scale(0.98);
+      }
+
+      .btn-primary:disabled {
+        opacity: 0.6;
+        cursor: default;
+      }
+
+      .btn-primary:focus-visible,
+      .btn-round:focus-visible,
+      .dot:focus-visible {
+        outline: 3px solid var(--teal);
+        outline-offset: 3px;
+      }
+
+      /* ---------- Round nav buttons ---------- */
+
+      .btn-round {
+        pointer-events: auto;
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        border: 1.5px solid rgba(255, 182, 39, 0.55);
+        background: rgba(42, 16, 52, 0.55);
+        color: var(--gold);
+        font-size: 1.6rem;
+        line-height: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        backdrop-filter: blur(6px);
+        transition: transform 0.2s ease, background 0.2s ease, opacity 0.2s ease;
+      }
+
+      .btn-round:hover:not(:disabled) {
+        background: rgba(255, 182, 39, 0.25);
+        transform: scale(1.08);
+      }
+
+      .btn-round:disabled {
+        opacity: 0.3;
+        cursor: default;
+      }
+
+      .nav-back,
+      .nav-next {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 6;
+      }
+
+      .nav-back {
+        left: 0.75rem;
+      }
+
+      .nav-next {
+        right: 0.75rem;
+      }
+
+      /* ---------- Dots ---------- */
+
+      .dots {
+        pointer-events: auto;
+        display: flex;
+        gap: 0.5rem;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        border: none;
+        background: rgba(255, 243, 218, 0.35);
+        cursor: pointer;
+        padding: 0;
+        transition: all 0.25s ease;
+      }
+
+      .dot-active {
+        width: 24px;
+        border-radius: 6px;
+        background: linear-gradient(135deg, var(--gold), var(--rose));
+      }
+
+      /* ---------- Responsive ---------- */
+
+      @media (max-width: 520px) {
+        .btn-round {
+          width: 40px;
+          height: 40px;
+          font-size: 1.3rem;
+        }
+        .text-panel {
+          min-height: 50%;
+          padding: 1rem 0.85rem calc(1rem + env(safe-area-inset-bottom, 0px));
+        }
+      }
+
+      /* ---------- Background Music Toggle Button ---------- */
+      .music-control-wrap {
+        position: fixed;
+        top: 1.25rem;
+        right: 1.25rem;
+        z-index: 50;
+        pointer-events: auto;
+      }
+
+      .music-btn {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.55rem 1rem;
+        font-family: "Nunito", sans-serif;
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: var(--cream);
+        background: rgba(42, 16, 52, 0.75);
+        border: 2px solid rgba(255, 182, 39, 0.55);
+        border-radius: 999px;
+        cursor: pointer;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow:
+          0 6px 18px rgba(0, 0, 0, 0.4),
+          0 0 15px rgba(255, 182, 39, 0.25),
+          inset 0 1px 1px rgba(255, 255, 255, 0.2);
+        transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+        user-select: none;
+      }
+
+      .music-btn:hover {
+        transform: translateY(-2px) scale(1.05);
+        border-color: var(--rose);
+        background: rgba(74, 29, 92, 0.85);
+        box-shadow:
+          0 10px 24px rgba(255, 92, 138, 0.4),
+          0 0 25px rgba(255, 182, 39, 0.4);
+      }
+
+      .music-btn:active {
+        transform: translateY(0) scale(0.97);
+      }
+
+      .music-btn.playing {
+        border-color: var(--gold);
+        background: linear-gradient(135deg, rgba(255, 182, 39, 0.25), rgba(255, 92, 138, 0.25)), rgba(42, 16, 52, 0.85);
+        box-shadow:
+          0 6px 20px rgba(255, 92, 138, 0.4),
+          0 0 22px rgba(255, 182, 39, 0.35);
+      }
+
+      .music-icon {
+        font-size: 1.15rem;
+        display: inline-block;
+        transition: transform 0.3s ease;
+      }
+
+      .music-btn.playing .music-icon {
+        animation: noteBounce 1.2s ease-in-out infinite alternate;
+      }
+
+      .sound-bars {
+        display: inline-flex;
+        align-items: flex-end;
+        gap: 2.5px;
+        height: 14px;
+      }
+
+      .sound-bar {
+        width: 3px;
+        height: 4px;
+        background: var(--gold);
+        border-radius: 2px;
+        transition: height 0.2s ease;
+      }
+
+      .music-btn.playing .sound-bar:nth-child(1) {
+        animation: barWave 0.8s ease-in-out infinite alternate 0.1s;
+      }
+      .music-btn.playing .sound-bar:nth-child(2) {
+        animation: barWave 0.8s ease-in-out infinite alternate 0.3s;
+      }
+      .music-btn.playing .sound-bar:nth-child(3) {
+        animation: barWave 0.8s ease-in-out infinite alternate 0.5s;
+      }
+
+      @keyframes barWave {
+        0% { height: 3px; background: var(--rose); }
+        100% { height: 14px; background: var(--gold); }
+      }
+
+      @keyframes noteBounce {
+        0% { transform: rotate(-8deg) scale(0.95); }
+        100% { transform: rotate(12deg) scale(1.15); }
+      }
+
+      @media (max-width: 520px) {
+        .music-control-wrap {
+          top: 0.85rem;
+          right: 0.85rem;
+        }
+        .music-btn {
+          padding: 0.45rem 0.8rem;
+          font-size: 0.82rem;
+        }
+      }
+
+      /* ---------- Reduced motion ---------- */
+
+      @media (prefers-reduced-motion: reduce) {
+        .text-inner {
+          animation: none;
+        }
+        .loading-spark {
+          animation: none;
+        }
+        .btn-primary:hover:not(:disabled),
+        .btn-round:hover:not(:disabled) {
+          transform: none;
+        }
+      }
+    </style>
+
+    <!-- Three.js r128 CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- React 18 & ReactDOM 18 UMD -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <script>
+      // --- SLIDES DATA ---
+      const MOM_NAME = "Mom";
+      const MY_NAME = "Your Loving Child";
+
+      const SLIDES = [
+        {
+          id: "cake",
+          title: "Happy Birthday, " + MOM_NAME + "!",
+          text: "Make a wish, then blow out the candles.",
+          buttons: [{ id: "blow", label: "Blow out the candles 🎂" }],
+        },
+        {
+          id: "star",
+          title: "May you always shine",
+          text: "May good health, peace and happiness follow you everywhere, today and every day of this new year.",
+          buttons: [],
+        },
+        {
+          id: "flower",
+          title: "May your dreams bloom",
+          text: "Every dream you put aside for the family deserves its turn. May this year give you time, joy and everything you have wished for.",
+          buttons: [],
+        },
+        {
+          id: "gift",
+          title: "Thank you for everything",
+          text: "For every meal, every prayer and every time you believed in me first. You are the best gift I ever got.",
+          buttons: [],
+        },
+        {
+          id: "heart",
+          title: "I love you, " + MOM_NAME + "!",
+          text: "Happy Birthday! With all my love, " + MY_NAME + ".",
+          buttons: [
+            { id: "celebrate", label: "Celebrate again 🎉" },
+            { id: "restart", label: "Watch from the start" },
+          ],
+        },
+      ];
+      const SLIDE_COUNT = SLIDES.length;
+
+      // --- TEXTURES ---
+      function makeCanvas(size) {
+        const canvas = document.createElement("canvas");
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext("2d");
+        return { canvas, ctx };
+      }
+
+      function makeGlowTexture(THREE, colorHex, hardness = 0.15) {
+        const size = 256;
+        const { canvas, ctx } = makeCanvas(size);
+        const r = size / 2;
+        const gradient = ctx.createRadialGradient(r, r, 0, r, r, r);
+        gradient.addColorStop(0, colorHex);
+        gradient.addColorStop(hardness, colorHex);
+        gradient.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, size, size);
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.needsUpdate = true;
+        return texture;
+      }
+
+      function makeSoftDotTexture(THREE) {
+        const size = 64;
+        const { canvas, ctx } = makeCanvas(size);
+        const r = size / 2;
+        const gradient = ctx.createRadialGradient(r, r, 0, r, r, r);
+        gradient.addColorStop(0, "rgba(255,255,255,1)");
+        gradient.addColorStop(0.4, "rgba(255,255,255,0.7)");
+        gradient.addColorStop(1, "rgba(255,255,255,0)");
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, size, size);
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.needsUpdate = true;
+        return texture;
+      }
+
+      function makeBlobShadowTexture(THREE) {
+        const size = 128;
+        const { canvas, ctx } = makeCanvas(size);
+        const r = size / 2;
+        const gradient = ctx.createRadialGradient(r, r, 0, r, r, r);
+        gradient.addColorStop(0, "rgba(10,2,16,0.55)");
+        gradient.addColorStop(0.6, "rgba(10,2,16,0.3)");
+        gradient.addColorStop(1, "rgba(10,2,16,0)");
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, size, size);
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.needsUpdate = true;
+        return texture;
+      }
+
+      function makeHeartTexture(THREE, colorHex) {
+        const size = 128;
+        const { canvas, ctx } = makeCanvas(size);
+        ctx.save();
+        ctx.translate(size / 2, size / 2 + 10);
+        ctx.scale(2.1, 2.1);
+        ctx.beginPath();
+        const topCurveHeight = 14;
+        ctx.moveTo(0, topCurveHeight);
+        ctx.bezierCurveTo(0, topCurveHeight - 14, -20, topCurveHeight - 14, -20, topCurveHeight);
+        ctx.bezierCurveTo(-20, topCurveHeight + 10, 0, topCurveHeight + 24, 0, topCurveHeight + 34);
+        ctx.bezierCurveTo(0, topCurveHeight + 24, 20, topCurveHeight + 10, 20, topCurveHeight);
+        ctx.bezierCurveTo(20, topCurveHeight - 14, 0, topCurveHeight - 14, 0, topCurveHeight);
+        ctx.closePath();
+        ctx.fillStyle = colorHex;
+        ctx.shadowColor = colorHex;
+        ctx.shadowBlur = 18;
+        ctx.fill();
+        ctx.restore();
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.needsUpdate = true;
+        return texture;
+      }
+
+      // --- SCENE MANAGER ---
+      const SPACING = 13;
+      const PALETTE = {
+        plumDark: 0x2a1034,
+        plumLight: 0x4a1d5c,
+        gold: 0xffb627,
+        rose: 0xff5c8a,
+        teal: 0x3ddbc0,
+        cream: 0xfff3da,
+      };
+
+      function easeInOutCubic(t) {
+        return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+      }
+
+      function lerp(a, b, t) {
+        return a + (b - a) * t;
+      }
+
+      function rand(min, max) {
+        return min + Math.random() * (max - min);
+      }
+
+      class SceneManager {
+        constructor(container, THREE, opts) {
+          this.container = container;
+          this.THREE = THREE;
+          this.reducedMotion = opts.reducedMotion;
+          this.onSettled = opts.onSettled;
+
+          this.time = 0;
+          this.currentIndex = 0;
+          this.currentX = 0;
+          this.zDist = 9;
+
+          this.flight = { active: false, start: 0, duration: 0, fromX: 0, toX: 0, pullBack: 0, tilt: 0 };
+          this.mouse = { x: 0, y: 0 };
+          this.parallax = { x: 0, y: 0 };
+
+          this.balloons = [];
+          this.particleLayers = [];
+          this.confettiPool = [];
+          this.confettiMaterials = [];
+          this.confettiGeo = null;
+
+          this.cakeRefs = {};
+          this.starRefs = {};
+          this.flowerRefs = {};
+          this.giftRefs = {};
+          this.heartRefs = {};
+
+          this.rafId = null;
+          this.disposed = false;
+          this.lastDelta = 0.016;
+
+          this.initRenderer();
+          this.initScene();
+          this.initLights();
+          this.initBackgroundParticles();
+          this.initBalloons();
+          this.initSlide1Cake();
+          this.initSlide2Star();
+          this.initSlide3Flower();
+          this.initSlide4Gift();
+          this.initSlide5Heart();
+          this.updateCameraDistance();
+
+          this.clock = new THREE.Clock();
+          this.animate = this.animate.bind(this);
+        }
+
+        initRenderer() {
+          const THREE = this.THREE;
+          const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+          renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+          renderer.setSize(this.container.clientWidth, this.container.clientHeight);
+          if (renderer.outputEncoding !== undefined) renderer.outputEncoding = THREE.sRGBEncoding;
+          this.container.appendChild(renderer.domElement);
+          this.renderer = renderer;
+        }
+
+        initScene() {
+          const THREE = this.THREE;
+          const scene = new THREE.Scene();
+          scene.fog = new THREE.Fog(PALETTE.plumDark, 14, 46);
+          this.scene = scene;
+
+          const camera = new THREE.PerspectiveCamera(
+            50,
+            this.container.clientWidth / this.container.clientHeight,
+            0.1,
+            200
+          );
+          camera.position.set(0, 2.6, 9);
+          this.camera = camera;
+        }
+
+        initLights() {
+          const THREE = this.THREE;
+          const hemi = new THREE.HemisphereLight(0xffe3b0, 0x3a1550, 0.75);
+          this.scene.add(hemi);
+
+          const mainLight = new THREE.DirectionalLight(0xffffff, 1.0);
+          mainLight.position.set(4, 8, 6);
+          this.scene.add(mainLight);
+
+          const rimLight = new THREE.DirectionalLight(0xff5c8a, 0.9);
+          rimLight.position.set(-6, 3, -4);
+          this.scene.add(rimLight);
+
+          const fillLight = new THREE.PointLight(0x3ddbc0, 0.35, 30);
+          fillLight.position.set(0, 2, 6);
+          this.scene.add(fillLight);
+        }
+
+        addBlobShadow(parent, y, scale = 1.6) {
+          const THREE = this.THREE;
+          const tex = makeBlobShadowTexture(THREE);
+          const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false });
+          const sprite = new THREE.Sprite(mat);
+          sprite.scale.set(3.2 * scale, 1.1 * scale, 1);
+          sprite.position.y = y;
+          parent.add(sprite);
+          return sprite;
+        }
+
+        addGlowSprite(parent, colorHex, size, opacity = 0.9) {
+          const THREE = this.THREE;
+          const tex = makeGlowTexture(THREE, colorHex);
+          const mat = new THREE.SpriteMaterial({
+            map: tex,
+            transparent: true,
+            depthWrite: false,
+            blending: THREE.AdditiveBlending,
+            opacity,
+          });
+          const sprite = new THREE.Sprite(mat);
+          sprite.scale.set(size, size, 1);
+          parent.add(sprite);
+          return sprite;
+        }
+
+        initBackgroundParticles() {
+          const THREE = this.THREE;
+          const dotTex = makeSoftDotTexture(THREE);
+          const layerDefs = [
+            { color: 0xffffff, count: 140, zMin: -42, zMax: -26, size: 0.5, opacity: 0.55 },
+            { color: PALETTE.gold, count: 110, zMin: -26, zMax: -14, size: 0.65, opacity: 0.6 },
+            { color: PALETTE.rose, count: 90, zMin: -16, zMax: -6, size: 0.75, opacity: 0.55 },
+          ];
+          const xMin = -SPACING * 1.5;
+          const xMax = SPACING * (SLIDE_COUNT + 0.5);
+
+          layerDefs.forEach((def) => {
+            const positions = new Float32Array(def.count * 3);
+            for (let i = 0; i < def.count; i++) {
+              positions[i * 3] = rand(xMin, xMax);
+              positions[i * 3 + 1] = rand(-4, 11);
+              positions[i * 3 + 2] = rand(def.zMin, def.zMax);
+            }
+            const geo = new THREE.BufferGeometry();
+            geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+            const mat = new THREE.PointsMaterial({
+              color: def.color,
+              size: def.size,
+              map: dotTex,
+              transparent: true,
+              opacity: def.opacity,
+              depthWrite: false,
+              blending: THREE.AdditiveBlending,
+              sizeAttenuation: true,
+            });
+            const points = new THREE.Points(geo, mat);
+            this.scene.add(points);
+            this.particleLayers.push({ points, speed: rand(0.02, 0.06), phase: rand(0, Math.PI * 2) });
+          });
+        }
+
+        createBalloon(color, scale) {
+          const THREE = this.THREE;
+          const group = new THREE.Group();
+          const bodyGeo = new THREE.SphereGeometry(1, 20, 20);
+          const mat = new THREE.MeshPhysicalMaterial({
+            color,
+            roughness: 0.25,
+            metalness: 0.05,
+            clearcoat: 0.8,
+            clearcoatRoughness: 0.2,
+            transparent: true,
+            opacity: 0.96,
+          });
+          const body = new THREE.Mesh(bodyGeo, mat);
+          body.scale.set(1, 1.25, 1);
+          group.add(body);
+
+          const knotGeo = new THREE.ConeGeometry(0.14, 0.26, 8);
+          const knot = new THREE.Mesh(knotGeo, mat);
+          knot.position.y = -1.28;
+          knot.rotation.x = Math.PI;
+          group.add(knot);
+
+          const stringMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.25 });
+          const stringPts = [new THREE.Vector3(0, -1.4, 0), new THREE.Vector3(rand(-0.15, 0.15), -2.7, 0)];
+          const stringGeo = new THREE.BufferGeometry().setFromPoints(stringPts);
+          const string = new THREE.Line(stringGeo, stringMat);
+          group.add(string);
+
+          const hl = new THREE.Mesh(
+            new THREE.SphereGeometry(0.22, 10, 10),
+            new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.35 })
+          );
+          hl.position.set(-0.35, 0.5, 0.75);
+          group.add(hl);
+
+          group.scale.setScalar(scale);
+          return group;
+        }
+
+        initBalloons() {
+          const colors = [PALETTE.gold, PALETTE.rose, PALETTE.teal, PALETTE.cream, 0xd68fff];
+          const xMin = -SPACING * 0.6;
+          const xMax = SPACING * (SLIDE_COUNT - 1) + SPACING * 0.6;
+
+          for (let i = 0; i < 24; i++) {
+            const color = colors[Math.floor(rand(0, colors.length))];
+            const scale = rand(0.4, 0.95);
+            const balloon = this.createBalloon(color, scale);
+            const baseX = rand(xMin, xMax);
+            const baseY = rand(-1, 6.5);
+            const baseZ = rand(-9, -2.5);
+            balloon.position.set(baseX, baseY, baseZ);
+            this.scene.add(balloon);
+            this.balloons.push({
+              mesh: balloon,
+              baseX,
+              baseY,
+              baseZ,
+              phase: rand(0, Math.PI * 2),
+              speedY: rand(0.25, 0.55),
+              swayAmp: rand(0.2, 0.5),
+              swaySpeed: rand(0.3, 0.7),
+            });
+          }
+
+          const sideSlides = [0, 1, 2, 3, 4];
+          sideSlides.forEach((slideIdx, i) => {
+            const side = i % 2 === 0 ? -1 : 1;
+            const color = colors[i % colors.length];
+            const scale = rand(1.5, 1.9);
+            const balloon = this.createBalloon(color, scale);
+            const baseX = slideIdx * SPACING + side * rand(4.2, 5.2);
+            const baseY = rand(-1.5, 1.5);
+            const baseZ = rand(1.5, 3.2);
+            balloon.position.set(baseX, baseY, baseZ);
+            this.scene.add(balloon);
+            this.balloons.push({
+              mesh: balloon,
+              baseX,
+              baseY,
+              baseZ,
+              phase: rand(0, Math.PI * 2),
+              speedY: rand(0.2, 0.4),
+              swayAmp: rand(0.15, 0.3),
+              swaySpeed: rand(0.2, 0.5),
+            });
+          });
+        }
+
+        initSlide1Cake() {
+          const THREE = this.THREE;
+          const slideGroup = new THREE.Group();
+          slideGroup.position.set(0 * SPACING, 1.3, 0);
+          this.scene.add(slideGroup);
+          this.addBlobShadow(slideGroup, -2.0, 1.4);
+
+          const cake = new THREE.Group();
+          slideGroup.add(cake);
+
+          const tierDefs = [
+            { r: 1.9, h: 0.85, color: PALETTE.rose },
+            { r: 1.35, h: 0.68, color: PALETTE.gold },
+            { r: 0.9, h: 0.55, color: PALETTE.teal },
+          ];
+          let y = -1.0;
+          const topYs = [];
+          tierDefs.forEach((t) => {
+            const geo = new THREE.CylinderGeometry(t.r, t.r * 1.03, t.h, 32);
+            const mat = new THREE.MeshStandardMaterial({ color: t.color, roughness: 0.45, metalness: 0.1 });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.position.y = y + t.h / 2;
+            cake.add(mesh);
+
+            const ringGeo = new THREE.TorusGeometry(t.r + 0.02, 0.08, 10, 32);
+            const ringMat = new THREE.MeshStandardMaterial({ color: PALETTE.cream, roughness: 0.5 });
+            const ring = new THREE.Mesh(ringGeo, ringMat);
+            ring.rotation.x = Math.PI / 2;
+            ring.position.y = y;
+            cake.add(ring);
+
+            y += t.h;
+            topYs.push(y);
+          });
+          const topY = topYs[topYs.length - 1];
+
+          for (let i = 0; i < 6; i++) {
+            const angle = (i / 6) * Math.PI * 2;
+            const cherry = new THREE.Mesh(
+              new THREE.SphereGeometry(0.12, 12, 12),
+              new THREE.MeshStandardMaterial({ color: 0xe23e57, roughness: 0.3, metalness: 0.1 })
+            );
+            cherry.position.set(Math.cos(angle) * 0.65, topY + 0.12, Math.sin(angle) * 0.65);
+            cake.add(cherry);
+          }
+
+          const candles = [];
+          const candleLight = new THREE.PointLight(0xffb15e, 1.4, 7, 2);
+          candleLight.position.set(0, topY + 0.9, 0);
+          cake.add(candleLight);
+
+          for (let i = 0; i < 5; i++) {
+            const angle = (i / 5) * Math.PI * 2;
+            const cx = Math.cos(angle) * 0.35;
+            const cz = Math.sin(angle) * 0.35;
+            const candle = new THREE.Mesh(
+              new THREE.CylinderGeometry(0.05, 0.05, 0.5, 10),
+              new THREE.MeshStandardMaterial({ color: 0xfff0e0, roughness: 0.5 })
+            );
+            candle.position.set(cx, topY + 0.25, cz);
+            cake.add(candle);
+
+            const flame = new THREE.Mesh(
+              new THREE.ConeGeometry(0.075, 0.22, 10),
+              new THREE.MeshStandardMaterial({
+                color: 0xffcf6b,
+                emissive: 0xff8a2b,
+                emissiveIntensity: 1.4,
+                roughness: 0.4,
+              })
+            );
+            flame.position.set(cx, topY + 0.6, cz);
+            cake.add(flame);
+
+            const glow = this.addGlowSprite(cake, "#ffcf6b", 0.6, 0.85);
+            glow.position.set(cx, topY + 0.58, cz);
+
+            candles.push({ flame, glow, baseY: topY + 0.6, lit: true, seed: rand(0, 100) });
+          }
+
+          this.cakeRefs = { slideGroup, cake, candles, candleLight, topY };
+        }
+
+        blowOutCandles(onDone) {
+          const { candles, candleLight, slideGroup } = this.cakeRefs;
+          candles.forEach((c, i) => {
+            c.lit = false;
+            setTimeout(() => {
+              if (this.disposed) return;
+              c.flame.visible = false;
+              c.glow.visible = false;
+            }, 150 + i * 70);
+          });
+          const start = performance.now();
+          const fromIntensity = candleLight.intensity;
+          const fadeLight = () => {
+            if (this.disposed) return;
+            const p = Math.min((performance.now() - start) / 500, 1);
+            candleLight.intensity = lerp(fromIntensity, 0, p);
+            if (p < 1) requestAnimationFrame(fadeLight);
+          };
+          fadeLight();
+
+          const worldPos = new this.THREE.Vector3();
+          slideGroup.getWorldPosition(worldPos);
+          worldPos.y += 1.4;
+          setTimeout(() => {
+            if (!this.disposed) this.spawnConfetti(worldPos, 130);
+          }, 350);
+
+          setTimeout(() => {
+            if (onDone && !this.disposed) onDone();
+          }, this.reducedMotion ? 400 : 1500);
+        }
+
+        initSlide2Star() {
+          const THREE = this.THREE;
+          const slideGroup = new THREE.Group();
+          slideGroup.position.set(1 * SPACING, 1.3, 0);
+          this.scene.add(slideGroup);
+          this.addBlobShadow(slideGroup, -2.0, 1.3);
+
+          const starShape = new THREE.Shape();
+          const points = 5;
+          const outerR = 1.3;
+          const innerR = 0.52;
+          for (let i = 0; i < points * 2; i++) {
+            const r = i % 2 === 0 ? outerR : innerR;
+            const angle = (i / (points * 2)) * Math.PI * 2 - Math.PI / 2;
+            const px = Math.cos(angle) * r;
+            const py = Math.sin(angle) * r;
+            if (i === 0) starShape.moveTo(px, py);
+            else starShape.lineTo(px, py);
+          }
+          starShape.closePath();
+
+          const geo = new THREE.ExtrudeGeometry(starShape, {
+            depth: 0.45,
+            bevelEnabled: true,
+            bevelThickness: 0.09,
+            bevelSize: 0.09,
+            bevelSegments: 4,
+            curveSegments: 16,
+          });
+          geo.center();
+
+          const mat = new THREE.MeshPhysicalMaterial({
+            color: PALETTE.gold,
+            metalness: 0.75,
+            roughness: 0.22,
+            clearcoat: 0.6,
+            clearcoatRoughness: 0.2,
+            emissive: 0x3a2400,
+            emissiveIntensity: 0.25,
+          });
+          const star = new THREE.Mesh(geo, mat);
+          slideGroup.add(star);
+
+          this.addGlowSprite(slideGroup, "#ffd98a", 4.6, 0.55);
+
+          const sparkles = [];
+          const sparkleGroup = new THREE.Group();
+          slideGroup.add(sparkleGroup);
+          for (let i = 0; i < 18; i++) {
+            const s = this.addGlowSprite(sparkleGroup, i % 2 === 0 ? "#ffffff" : "#ffd98a", rand(0.25, 0.45), 0.9);
+            const angle = (i / 18) * Math.PI * 2;
+            const radius = rand(2.0, 2.5);
+            s.position.set(Math.cos(angle) * radius, Math.sin(angle * 1.3) * 0.6, Math.sin(angle) * radius);
+            sparkles.push({ sprite: s, angle, radius, speed: rand(0.2, 0.5), phase: rand(0, Math.PI * 2) });
+          }
+
+          this.starRefs = { slideGroup, star, sparkles, sparkleGroup };
+        }
+
+        initSlide3Flower() {
+          const THREE = this.THREE;
+          const slideGroup = new THREE.Group();
+          slideGroup.position.set(2 * SPACING, 1.0, 0);
+          this.scene.add(slideGroup);
+          this.addBlobShadow(slideGroup, -2.2, 1.3);
+
+          const flower = new THREE.Group();
+          flower.position.y = 1.35;
+          slideGroup.add(flower);
+
+          const petalGeo = new THREE.SphereGeometry(0.55, 14, 14);
+          const petalMatOuter = new THREE.MeshStandardMaterial({ color: PALETTE.rose, roughness: 0.5 });
+          const petalMatInner = new THREE.MeshStandardMaterial({ color: 0xffd1dd, roughness: 0.45 });
+
+          const ring1 = new THREE.Group();
+          for (let i = 0; i < 8; i++) {
+            const petal = new THREE.Mesh(petalGeo, petalMatOuter);
+            petal.scale.set(0.5, 1, 0.22);
+            const angle = (i / 8) * Math.PI * 2;
+            petal.position.set(Math.cos(angle) * 0.75, Math.sin(angle) * 0.75, 0);
+            petal.rotation.z = angle + Math.PI / 2;
+            petal.rotation.x = 0.15;
+            ring1.add(petal);
+          }
+          flower.add(ring1);
+
+          const ring2 = new THREE.Group();
+          for (let i = 0; i < 8; i++) {
+            const petal = new THREE.Mesh(petalGeo, petalMatInner);
+            petal.scale.set(0.38, 0.75, 0.2);
+            const angle = (i / 8) * Math.PI * 2 + Math.PI / 8;
+            petal.position.set(Math.cos(angle) * 0.42, Math.sin(angle) * 0.42, 0.28);
+            petal.rotation.z = angle + Math.PI / 2;
+            petal.rotation.x = -0.35;
+            ring2.add(petal);
+          }
+          flower.add(ring2);
+
+          const center = new THREE.Mesh(
+            new THREE.SphereGeometry(0.4, 18, 18),
+            new THREE.MeshStandardMaterial({ color: PALETTE.gold, roughness: 0.4, metalness: 0.2 })
+          );
+          center.position.z = 0.25;
+          flower.add(center);
+
+          const stem = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.09, 0.11, 2.6, 10),
+            new THREE.MeshStandardMaterial({ color: 0x2f7a4f, roughness: 0.6 })
+          );
+          stem.position.y = 0.5;
+          slideGroup.add(stem);
+
+          const leafGeo = new THREE.SphereGeometry(0.45, 12, 12);
+          const leafMat = new THREE.MeshStandardMaterial({ color: 0x3f9b63, roughness: 0.55 });
+          const leaf1 = new THREE.Mesh(leafGeo, leafMat);
+          leaf1.scale.set(1, 0.35, 0.5);
+          leaf1.position.set(0.5, 0.1, 0);
+          leaf1.rotation.z = 0.5;
+          slideGroup.add(leaf1);
+
+          const leaf2 = new THREE.Mesh(leafGeo, leafMat);
+          leaf2.scale.set(1, 0.35, 0.5);
+          leaf2.position.set(-0.55, -0.3, 0);
+          leaf2.rotation.z = -0.5;
+          slideGroup.add(leaf2);
+
+          this.flowerRefs = { slideGroup, flower };
+        }
+
+        initSlide4Gift() {
+          const THREE = this.THREE;
+          const slideGroup = new THREE.Group();
+          slideGroup.position.set(3 * SPACING, 1.3, 0);
+          this.scene.add(slideGroup);
+          this.addBlobShadow(slideGroup, -2.0, 1.4);
+
+          const gift = new THREE.Group();
+          slideGroup.add(gift);
+
+          const box = new THREE.Mesh(
+            new THREE.BoxGeometry(1.7, 1.1, 1.7),
+            new THREE.MeshStandardMaterial({ color: PALETTE.rose, roughness: 0.4 })
+          );
+          gift.add(box);
+
+          const lid = new THREE.Mesh(
+            new THREE.BoxGeometry(1.9, 0.32, 1.9),
+            new THREE.MeshStandardMaterial({ color: PALETTE.gold, roughness: 0.35, metalness: 0.2 })
+          );
+          lid.position.y = 1.1 / 2 + 0.32 / 2;
+          gift.add(lid);
+
+          const ribbonMat = new THREE.MeshStandardMaterial({ color: PALETTE.cream, roughness: 0.4 });
+          const ribbon1 = new THREE.Mesh(new THREE.BoxGeometry(1.74, 1.14, 0.28), ribbonMat);
+          gift.add(ribbon1);
+          const ribbon2 = new THREE.Mesh(new THREE.BoxGeometry(0.28, 1.14, 1.74), ribbonMat);
+          gift.add(ribbon2);
+          const ribbonLid1 = new THREE.Mesh(new THREE.BoxGeometry(1.94, 0.34, 0.3), ribbonMat);
+          ribbonLid1.position.y = lid.position.y;
+          gift.add(ribbonLid1);
+          const ribbonLid2 = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.34, 1.94), ribbonMat);
+          ribbonLid2.position.y = lid.position.y;
+          gift.add(ribbonLid2);
+
+          const bowMat = new THREE.MeshStandardMaterial({ color: PALETTE.cream, roughness: 0.35 });
+          const loopGeo = new THREE.TorusGeometry(0.32, 0.1, 10, 20);
+          const loop1 = new THREE.Mesh(loopGeo, bowMat);
+          loop1.position.set(-0.22, lid.position.y + 0.22, 0);
+          loop1.rotation.y = Math.PI / 2.3;
+          gift.add(loop1);
+          const loop2 = new THREE.Mesh(loopGeo, bowMat);
+          loop2.position.set(0.22, lid.position.y + 0.22, 0);
+          loop2.rotation.y = -Math.PI / 2.3;
+          gift.add(loop2);
+          const knot = new THREE.Mesh(new THREE.SphereGeometry(0.17, 14, 14), bowMat);
+          knot.position.y = lid.position.y + 0.18;
+          gift.add(knot);
+
+          gift.position.y = 0;
+          this.giftRefs = { slideGroup, gift, baseY: 0 };
+        }
+
+        initSlide5Heart() {
+          const THREE = this.THREE;
+          const slideGroup = new THREE.Group();
+          slideGroup.position.set(4 * SPACING, 1.5, 0);
+          this.scene.add(slideGroup);
+          this.addBlobShadow(slideGroup, -2.2, 1.4);
+
+          const heartShape = new THREE.Shape();
+          const x = 0,
+            y = 0;
+          heartShape.moveTo(x + 0.25, y + 0.25);
+          heartShape.bezierCurveTo(x + 0.25, y + 0.25, x + 0.2, y, x, y);
+          heartShape.bezierCurveTo(x - 0.3, y, x - 0.3, y + 0.35, x - 0.3, y + 0.35);
+          heartShape.bezierCurveTo(x - 0.3, y + 0.55, x - 0.1, y + 0.77, x + 0.25, y + 0.95);
+          heartShape.bezierCurveTo(x + 0.6, y + 0.77, x + 0.8, y + 0.55, x + 0.8, y + 0.35);
+          heartShape.bezierCurveTo(x + 0.8, y + 0.35, x + 0.8, y, x + 0.5, y);
+          heartShape.bezierCurveTo(x + 0.35, y, x + 0.25, y + 0.25, x + 0.25, y + 0.25);
+
+          const geo = new THREE.ExtrudeGeometry(heartShape, {
+            depth: 0.3,
+            bevelEnabled: true,
+            bevelThickness: 0.06,
+            bevelSize: 0.06,
+            bevelSegments: 6,
+            curveSegments: 20,
+          });
+          geo.rotateX(Math.PI);
+          geo.center();
+
+          const mat = new THREE.MeshPhysicalMaterial({
+            color: 0xff3f72,
+            roughness: 0.28,
+            metalness: 0.1,
+            clearcoat: 1,
+            clearcoatRoughness: 0.08,
+            emissive: 0x4a0018,
+            emissiveIntensity: 0.15,
+          });
+          const heart = new THREE.Mesh(geo, mat);
+          heart.scale.setScalar(1.7);
+          slideGroup.add(heart);
+
+          this.addGlowSprite(slideGroup, "#ff5c8a", 5, 0.5);
+
+          const miniTex = makeHeartTexture(THREE, "#ffb6c9");
+          const miniMat = new THREE.SpriteMaterial({
+            map: miniTex,
+            transparent: true,
+            depthWrite: false,
+            blending: THREE.AdditiveBlending,
+          });
+          const minis = [];
+          const miniGroup = new THREE.Group();
+          slideGroup.add(miniGroup);
+          for (let i = 0; i < 16; i++) {
+            const s = new THREE.Sprite(miniMat.clone());
+            const size = rand(0.3, 0.6);
+            s.scale.set(size, size, 1);
+            s.position.set(rand(-2.4, 2.4), rand(-2.5, 3), rand(-1.5, 1.5));
+            miniGroup.add(s);
+            minis.push({ sprite: s, speed: rand(0.4, 0.9), startY: s.position.y });
+          }
+
+          this.heartRefs = { slideGroup, heart, minis, miniGroup };
+        }
+
+        ensureConfettiAssets() {
+          if (this.confettiGeo) return;
+          const THREE = this.THREE;
+          this.confettiGeo = new THREE.BoxGeometry(0.14, 0.2, 0.02);
+          const colors = [PALETTE.gold, PALETTE.rose, PALETTE.teal, PALETTE.cream, 0xffffff];
+          this.confettiMaterials = colors.map(
+            (c) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.5, side: THREE.DoubleSide })
+          );
+        }
+
+        spawnConfetti(origin, count = 120) {
+          this.ensureConfettiAssets();
+          const THREE = this.THREE;
+          for (let i = 0; i < count; i++) {
+            const mat = this.confettiMaterials[Math.floor(rand(0, this.confettiMaterials.length))];
+            const mesh = new THREE.Mesh(this.confettiGeo, mat);
+            mesh.position.copy(origin);
+            mesh.position.x += rand(-0.3, 0.3);
+            mesh.rotation.set(rand(0, Math.PI), rand(0, Math.PI), rand(0, Math.PI));
+            this.scene.add(mesh);
+            this.confettiPool.push({
+              mesh,
+              velocity: new THREE.Vector3(rand(-3.2, 3.2), rand(3.5, 7), rand(-2.2, 2.2)),
+              angular: new THREE.Vector3(rand(-6, 6), rand(-6, 6), rand(-6, 6)),
+              life: 0,
+              maxLife: rand(1.6, 2.6),
+            });
+          }
+        }
+
+        updateConfetti(delta) {
+          const gravity = 5.2;
+          for (let i = this.confettiPool.length - 1; i >= 0; i--) {
+            const p = this.confettiPool[i];
+            p.life += delta;
+            p.velocity.y -= gravity * delta;
+            p.mesh.position.addScaledVector(p.velocity, delta);
+            p.mesh.rotation.x += p.angular.x * delta;
+            p.mesh.rotation.y += p.angular.y * delta;
+            p.mesh.rotation.z += p.angular.z * delta;
+            const t = p.life / p.maxLife;
+            if (p.mesh.material.opacity !== undefined) {
+              p.mesh.material.transparent = true;
+              p.mesh.material.opacity = Math.max(0, 1 - t);
+            }
+            if (t >= 1) {
+              this.scene.remove(p.mesh);
+              this.confettiPool.splice(i, 1);
+            }
+          }
+        }
+
+        celebrateConfetti() {
+          const THREE = this.THREE;
+          const pos = new THREE.Vector3(this.currentX, 3, 1);
+          this.spawnConfetti(pos, 150);
+        }
+
+        updateCameraDistance() {
+          const w = this.container.clientWidth;
+          const h = this.container.clientHeight;
+          const aspect = w / h;
+          if (aspect < 0.6) this.zDist = 14.5;
+          else if (aspect < 0.85) this.zDist = 12.5;
+          else if (aspect < 1.1) this.zDist = 10.5;
+          else this.zDist = 9;
+          this.camera.aspect = aspect;
+          this.camera.updateProjectionMatrix();
+        }
+
+        resize() {
+          if (!this.renderer) return;
+          const w = this.container.clientWidth;
+          const h = this.container.clientHeight;
+          this.renderer.setSize(w, h);
+          this.updateCameraDistance();
+        }
+
+        setMouse(nx, ny) {
+          this.mouse.x = nx;
+          this.mouse.y = ny;
+        }
+
+        goToSlide(index) {
+          const clamped = Math.max(0, Math.min(SLIDE_COUNT - 1, index));
+          const toX = clamped * SPACING;
+          if (clamped === this.currentIndex && Math.abs(toX - this.currentX) < 0.001) {
+            return;
+          }
+          this.currentIndex = clamped;
+          this.flight = {
+            active: true,
+            start: performance.now(),
+            duration: this.reducedMotion ? 350 : 1700,
+            fromX: this.currentX,
+            toX,
+            pullBack: 0,
+            tilt: 0,
+          };
+        }
+
+        updateFlight() {
+          if (!this.flight.active) {
+            this.currentX = this.currentIndex * SPACING;
+            return;
+          }
+          const now = performance.now();
+          const p = Math.min((now - this.flight.start) / this.flight.duration, 1);
+          const eased = easeInOutCubic(p);
+          this.currentX = lerp(this.flight.fromX, this.flight.toX, eased);
+          const arch = Math.sin(p * Math.PI);
+          const pullBackAmt = this.reducedMotion ? 0 : 2.4;
+          const tiltAmt = this.reducedMotion ? 0 : 0.09;
+          const dir = this.flight.toX >= this.flight.fromX ? 1 : -1;
+          this.flight.pullBack = arch * pullBackAmt;
+          this.flight.tilt = arch * tiltAmt * dir;
+          if (p >= 1) {
+            this.flight.active = false;
+            this.currentX = this.flight.toX;
+            this.flight.pullBack = 0;
+            this.flight.tilt = 0;
+            if (this.onSettled) this.onSettled(this.currentIndex);
+          }
+        }
+
+        updateCameraTransform() {
+          const targetParX = this.reducedMotion ? 0 : this.mouse.x * 0.6;
+          const targetParY = this.reducedMotion ? 0 : -this.mouse.y * 0.3;
+          const smoothing = 1 - Math.pow(0.0001, this.lastDelta || 0.016);
+          this.parallax.x = lerp(this.parallax.x, targetParX, smoothing);
+          this.parallax.y = lerp(this.parallax.y, targetParY, smoothing);
+
+          const bob = this.reducedMotion ? 0 : Math.sin(this.time * 0.6) * 0.08;
+
+          this.camera.position.x = this.currentX + this.parallax.x;
+          this.camera.position.y = 2.6 + this.parallax.y + bob;
+          this.camera.position.z = this.zDist + this.flight.pullBack;
+          this.camera.rotation.set(0, 0, 0);
+          this.camera.lookAt(this.currentX, 0.3, 0);
+          if (this.flight.tilt) this.camera.rotateZ(this.flight.tilt);
+        }
+
+        updateBalloons(_delta) {
+          this.balloons.forEach((b) => {
+            const t = this.time;
+            b.mesh.position.y = b.baseY + Math.sin(t * b.speedY + b.phase) * 0.45;
+            b.mesh.position.x = b.baseX + Math.sin(t * 0.25 + b.phase) * b.swayAmp * 0.4;
+            b.mesh.rotation.z = Math.sin(t * b.swaySpeed + b.phase) * 0.15;
+          });
+        }
+
+        updateParticles(delta) {
+          this.particleLayers.forEach((layer) => {
+            layer.points.rotation.y += layer.speed * delta * 0.05;
+            layer.points.position.y = Math.sin(this.time * 0.05 + layer.phase) * 0.5;
+          });
+        }
+
+        updateCake(delta) {
+          const refs = this.cakeRefs;
+          if (!refs.cake) return;
+          refs.cake.rotation.y += delta * (this.reducedMotion ? 0.03 : 0.18);
+          refs.candles.forEach((c) => {
+            if (!c.lit) return;
+            const flick = 1 + Math.sin(this.time * 18 + c.seed) * 0.12 + Math.sin(this.time * 37 + c.seed) * 0.06;
+            c.flame.scale.set(flick, flick, flick);
+            c.glow.material.opacity = 0.7 + Math.sin(this.time * 14 + c.seed) * 0.15;
+          });
+          if (refs.candleLight && refs.candles.some((c) => c.lit)) {
+            refs.candleLight.intensity = 1.3 + Math.sin(this.time * 20) * 0.15;
+          }
+        }
+
+        updateStar(delta) {
+          const refs = this.starRefs;
+          if (!refs.star) return;
+          refs.star.rotation.y += delta * (this.reducedMotion ? 0.08 : 0.5);
+          refs.star.rotation.x = Math.sin(this.time * 0.3) * 0.08;
+          refs.sparkles.forEach((s) => {
+            const angle = s.angle + this.time * s.speed * (this.reducedMotion ? 0.2 : 1);
+            s.sprite.position.set(
+              Math.cos(angle) * s.radius,
+              Math.sin(this.time * 0.8 + s.phase) * 0.6,
+              Math.sin(angle) * s.radius
+            );
+            s.sprite.material.opacity = 0.6 + Math.sin(this.time * 3 + s.phase) * 0.35;
+          });
+        }
+
+        updateFlower(_delta) {
+          const refs = this.flowerRefs;
+          if (!refs.flower) return;
+          const t = this.time;
+          refs.slideGroup.rotation.z = Math.sin(t * 0.6) * 0.05;
+          refs.slideGroup.rotation.x = Math.sin(t * 0.4) * 0.03;
+          refs.flower.rotation.y = Math.sin(t * 0.3) * 0.25;
+        }
+
+        updateGift(delta) {
+          const refs = this.giftRefs;
+          if (!refs.gift) return;
+          refs.gift.position.y = refs.baseY + Math.sin(this.time * 0.8) * 0.22;
+          refs.gift.rotation.y += delta * (this.reducedMotion ? 0.05 : 0.35);
+        }
+
+        updateHeart(delta) {
+          const refs = this.heartRefs;
+          if (!refs.heart) return;
+          const pulse = Math.pow(Math.max(0, Math.sin(this.time * 2.4)), 6) * 0.18;
+          const s = 1.7 * (1 + pulse);
+          refs.heart.scale.setScalar(s);
+          refs.heart.rotation.y += delta * (this.reducedMotion ? 0.07 : 0.45);
+
+          refs.minis.forEach((m) => {
+            m.sprite.position.y += delta * m.speed * (this.reducedMotion ? 0.3 : 1);
+            if (m.sprite.position.y > 3.2) m.sprite.position.y = -2.6;
+            const h = (m.sprite.position.y + 2.6) / 5.8;
+            m.sprite.material.opacity = Math.sin(h * Math.PI) * 0.9;
+          });
+        }
+
+        animate() {
+          if (this.disposed) return;
+          this.rafId = requestAnimationFrame(this.animate);
+          const delta = Math.min(this.clock.getDelta(), 0.05);
+          this.lastDelta = delta;
+          this.time += delta;
+
+          this.updateFlight();
+          this.updateCameraTransform();
+          this.updateBalloons(delta);
+          this.updateParticles(delta);
+          this.updateCake(delta);
+          this.updateStar(delta);
+          this.updateFlower(delta);
+          this.updateGift(delta);
+          this.updateHeart(delta);
+          this.updateConfetti(delta);
+
+          this.renderer.render(this.scene, this.camera);
+        }
+
+        start() {
+          this.clock.start();
+          this.animate();
+        }
+
+        dispose() {
+          this.disposed = true;
+          if (this.rafId) cancelAnimationFrame(this.rafId);
+          if (this.renderer) {
+            this.renderer.dispose();
+            if (this.renderer.domElement && this.renderer.domElement.parentNode) {
+              this.renderer.domElement.parentNode.removeChild(this.renderer.domElement);
+            }
+          }
+        }
+      }
+
+      // --- HELPER: WEBGL CHECK ---
+      function isWebGLAvailable() {
+        try {
+          const canvas = document.createElement("canvas");
+          const gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+          return !!window.WebGLRenderingContext && !!gl;
+        } catch (e) {
+          return false;
+        }
+      }
+
+      // --- REACT UI COMPONENTS ---
+      const { useState, useEffect, useRef, useCallback, createElement: h } = React;
+
+      function Dots({ count, current, onSelect }) {
+        return h(
+          "div",
+          { className: "dots", role: "tablist", "aria-label": "Slides" },
+          Array.from({ length: count }).map((_, i) =>
+            h("button", {
+              key: i,
+              role: "tab",
+              "aria-selected": i === current,
+              "aria-label": "Go to slide " + (i + 1),
+              className: "dot" + (i === current ? " dot-active" : ""),
+              onClick: () => onSelect(i),
+            })
+          )
+        );
+      }
+
+      // --- MAGICAL WEB AUDIO MUSIC BOX SYNTHESIZER ---
+      class BirthdayMusicPlayer {
+        constructor() {
+          this.ctx = null;
+          this.isPlaying = false;
+          this.loopTimer = null;
+          this.gainNode = null;
+        }
+
+        initContext() {
+          if (!this.ctx) {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (AudioCtx) {
+              this.ctx = new AudioCtx();
+              this.gainNode = this.ctx.createGain();
+              this.gainNode.gain.value = 0.35;
+              this.gainNode.connect(this.ctx.destination);
+            }
+          }
+          if (this.ctx && this.ctx.state === "suspended") {
+            this.ctx.resume();
+          }
+        }
+
+        playChime(freq, time, dur, vol = 0.45) {
+          if (!this.ctx || freq <= 0) return;
+          const osc1 = this.ctx.createOscillator();
+          const osc2 = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+
+          osc1.type = "sine";
+          osc1.frequency.setValueAtTime(freq, time);
+
+          osc2.type = "sine";
+          osc2.frequency.setValueAtTime(freq * 2.01, time);
+
+          g.gain.setValueAtTime(0.0001, time);
+          g.gain.linearRampToValueAtTime(vol, time + 0.008);
+          g.gain.exponentialRampToValueAtTime(0.0001, time + dur);
+
+          osc1.connect(g);
+          osc2.connect(g);
+          g.connect(this.gainNode);
+
+          osc1.start(time);
+          osc2.start(time);
+          osc1.stop(time + dur + 0.05);
+          osc2.stop(time + dur + 0.05);
+        }
+
+        startMelody() {
+          this.initContext();
+          if (!this.ctx) return;
+          this.stop();
+          this.isPlaying = true;
+
+          const tempo = 104;
+          const b = 60 / tempo;
+          const t0 = this.ctx.currentTime + 0.05;
+
+          const N = {
+            D3: 146.83, G3: 196.00, A3: 220.00, B3: 246.94, C4: 261.63,
+            D4: 293.66, E4: 329.63, Fs4: 369.99, G4: 392.00, A4: 440.00,
+            B4: 493.88, C5: 523.25, D5: 587.33, E5: 659.25
+          };
+
+          const notes = [
+            [N.D4, 0.7, 0.75, 0.45], [N.D4, 0.25, 0.25, 0.4], [N.E4, 1.0, 1.0, 0.5], [N.D4, 1.0, 1.0, 0.5], [N.G4, 1.0, 1.0, 0.55], [N.Fs4, 2.0, 2.0, 0.55],
+            [N.D4, 0.7, 0.75, 0.45], [N.D4, 0.25, 0.25, 0.4], [N.E4, 1.0, 1.0, 0.5], [N.D4, 1.0, 1.0, 0.5], [N.A4, 1.0, 1.0, 0.55], [N.G4, 2.0, 2.0, 0.55],
+            [N.D4, 0.7, 0.75, 0.45], [N.D4, 0.25, 0.25, 0.4], [N.D5, 1.0, 1.0, 0.6], [N.B4, 1.0, 1.0, 0.55], [N.G4, 1.0, 1.0, 0.5], [N.Fs4, 1.0, 1.0, 0.5], [N.E4, 2.0, 2.0, 0.55],
+            [N.C5, 0.7, 0.75, 0.5], [N.C5, 0.25, 0.25, 0.45], [N.B4, 1.0, 1.0, 0.55], [N.G4, 1.0, 1.0, 0.55], [N.A4, 1.0, 1.0, 0.55], [N.G4, 2.6, 2.6, 0.6]
+          ];
+
+          const chords = [
+            { beat: 0, notes: [N.G3, N.B3] }, { beat: 4, notes: [N.D3, N.A3] },
+            { beat: 6, notes: [N.D3, N.A3] }, { beat: 10, notes: [N.G3, N.B3] },
+            { beat: 12, notes: [N.G3, N.B3] }, { beat: 16, notes: [N.C4, N.E4] },
+            { beat: 18, notes: [N.G3, N.D4] }, { beat: 20, notes: [N.D3, N.A3] },
+            { beat: 22, notes: [N.G3, N.B3, N.D4] }
+          ];
+
+          let t = t0;
+          notes.forEach(([f, dur, del, v]) => {
+            this.playChime(f, t, dur * b * 1.5, v);
+            t += del * b;
+          });
+
+          chords.forEach((c) => {
+            const ct = t0 + c.beat * b;
+            c.notes.forEach((n) => this.playChime(n, ct, b * 2.2, 0.22));
+          });
+
+          const totalMs = (t - t0 + b * 2) * 1000;
+          this.loopTimer = setTimeout(() => {
+            if (this.isPlaying) this.startMelody();
+          }, totalMs);
+        }
+
+        stop() {
+          this.isPlaying = false;
+          if (this.loopTimer) {
+            clearTimeout(this.loopTimer);
+            this.loopTimer = null;
+          }
+        }
+      }
+
+      function App() {
+        const containerRef = useRef(null);
+        const sceneRef = useRef(null);
+        const audioRef = useRef(null);
+        const playerRef = useRef(null);
+        const [isPlaying, setIsPlaying] = useState(false);
+        const [webglState, setWebglState] = useState("checking");
+        const [slideIndex, setSlideIndex] = useState(0);
+        const slideIndexRef = useRef(0);
+        const [flamesBlown, setFlamesBlown] = useState(false);
+        const touchStartX = useRef(null);
+        const reducedMotionRef = useRef(false);
+
+        if (!playerRef.current) {
+          playerRef.current = new BirthdayMusicPlayer();
+        }
+
+        slideIndexRef.current = slideIndex;
+
+        const togglePlay = () => {
+          const audio = audioRef.current;
+          const player = playerRef.current;
+          if (isPlaying) {
+            if (audio) audio.pause();
+            player.stop();
+            setIsPlaying(false);
+          } else {
+            // If audio has loaded source, try it; otherwise launch crystal chime synth!
+            if (audio && audio.currentSrc && !audio.error) {
+              audio.play().then(() => {
+                setIsPlaying(true);
+              }).catch(() => {
+                player.startMelody();
+                setIsPlaying(true);
+              });
+            } else {
+              player.startMelody();
+              setIsPlaying(true);
+            }
+          }
+        };
+
+        // Background music autoplay with user interaction fallback
+        useEffect(() => {
+          const audio = audioRef.current;
+          const player = playerRef.current;
+
+          const startMusic = () => {
+            if (audio && audio.currentSrc && !audio.error) {
+              audio.play()
+                .then(() => setIsPlaying(true))
+                .catch(() => enableOnFirstGesture());
+            } else {
+              enableOnFirstGesture();
+            }
+          };
+
+          const enableOnFirstGesture = () => {
+            const handleFirstGesture = () => {
+              if (audio && audio.currentSrc && !audio.error) {
+                audio.play().then(() => setIsPlaying(true)).catch(() => {
+                  player.startMelody();
+                  setIsPlaying(true);
+                });
+              } else {
+                player.startMelody();
+                setIsPlaying(true);
+              }
+              window.removeEventListener("click", handleFirstGesture);
+              window.removeEventListener("touchstart", handleFirstGesture);
+              window.removeEventListener("keydown", handleFirstGesture);
+            };
+            window.addEventListener("click", handleFirstGesture);
+            window.addEventListener("touchstart", handleFirstGesture);
+            window.addEventListener("keydown", handleFirstGesture);
+          };
+
+          // If MP3 file errors or is missing, chime synth takes over automatically on play!
+          if (audio) {
+            audio.addEventListener("error", () => {
+              if (isPlaying) {
+                player.startMelody();
+              }
+            });
+          }
+
+          startMusic();
+
+          return () => {
+            player?.stop();
+          };
+        }, []);
+
+        const goTo = useCallback((index) => {
+          const clamped = Math.max(0, Math.min(SLIDE_COUNT - 1, index));
+          setSlideIndex(clamped);
+          sceneRef.current?.goToSlide(clamped);
+        }, []);
+
+        useEffect(() => {
+          reducedMotionRef.current =
+            typeof window !== "undefined" && window.matchMedia
+              ? window.matchMedia("(prefers-reduced-motion: reduce)").matches
+              : false;
+
+          if (!isWebGLAvailable()) {
+            setWebglState("unsupported");
+            return;
+          }
+
+          if (!window.THREE) {
+            setWebglState("unsupported");
+            return;
+          }
+
+          if (!containerRef.current) return;
+          const manager = new SceneManager(containerRef.current, window.THREE, {
+            reducedMotion: reducedMotionRef.current,
+            onSettled: (index) => {
+              if (index === SLIDE_COUNT - 1) {
+                sceneRef.current?.celebrateConfetti();
+              }
+            },
+          });
+          sceneRef.current = manager;
+          manager.start();
+          setWebglState("ready");
+
+          return () => {
+            sceneRef.current?.dispose();
+            sceneRef.current = null;
+          };
+        }, []);
+
+        useEffect(() => {
+          if (webglState !== "ready") return;
+
+          const handleResize = () => sceneRef.current?.resize();
+          const handlePointerMove = (e) => {
+            const nx = (e.clientX / window.innerWidth) * 2 - 1;
+            const ny = (e.clientY / window.innerHeight) * 2 - 1;
+            sceneRef.current?.setMouse(nx, ny);
+          };
+          const handleTouchMove = (e) => {
+            if (!e.touches.length) return;
+            const t = e.touches[0];
+            const nx = (t.clientX / window.innerWidth) * 2 - 1;
+            const ny = (t.clientY / window.innerHeight) * 2 - 1;
+            sceneRef.current?.setMouse(nx, ny);
+          };
+          const handleKeyDown = (e) => {
+            if (e.key === "ArrowRight") goTo(slideIndexRef.current + 1);
+            else if (e.key === "ArrowLeft") goTo(slideIndexRef.current - 1);
+          };
+
+          window.addEventListener("resize", handleResize);
+          window.addEventListener("pointermove", handlePointerMove);
+          window.addEventListener("touchmove", handleTouchMove, { passive: true });
+          window.addEventListener("keydown", handleKeyDown);
+          return () => {
+            window.removeEventListener("resize", handleResize);
+            window.removeEventListener("pointermove", handlePointerMove);
+            window.removeEventListener("touchmove", handleTouchMove);
+            window.removeEventListener("keydown", handleKeyDown);
+          };
+        }, [webglState, goTo]);
+
+        const handleTouchStart = (e) => {
+          touchStartX.current = e.touches[0].clientX;
+        };
+        const handleTouchEnd = (e) => {
+          if (touchStartX.current === null) return;
+          const dx = e.changedTouches[0].clientX - touchStartX.current;
+          touchStartX.current = null;
+          if (Math.abs(dx) < 45) return;
+          if (dx < 0) goTo(slideIndexRef.current + 1);
+          else goTo(slideIndexRef.current - 1);
+        };
+
+        const handleButton = (id) => {
+          if (id === "blow") {
+            setFlamesBlown(true);
+            sceneRef.current?.blowOutCandles(() => {
+              goTo(1);
+            });
+          } else if (id === "celebrate") {
+            sceneRef.current?.celebrateConfetti();
+          } else if (id === "restart") {
+            setFlamesBlown(false);
+            goTo(0);
+          }
+        };
+
+        const slide = SLIDES[slideIndex];
+
+        return h(
+          "div",
+          {
+            className: "app-root",
+            onTouchStart: handleTouchStart,
+            onTouchEnd: handleTouchEnd,
+          },
+
+          // Floating background music player button
+          h(
+            "div",
+            { className: "music-control-wrap" },
+            h(
+              "audio",
+              {
+                ref: audioRef,
+                loop: true,
+                preload: "auto",
+                onPlay: () => setIsPlaying(true),
+                onPause: () => setIsPlaying(false),
+              },
+              h("source", { src: "birthday-song.mp3", type: "audio/mpeg" }),
+              h("source", { src: "public/birthday-song.mp3", type: "audio/mpeg" })
+            ),
+            h(
+              "button",
+              {
+                className: "music-btn" + (isPlaying ? " playing" : ""),
+                onClick: togglePlay,
+                "aria-label": isPlaying ? "Pause background music" : "Play background music",
+                title: isPlaying ? "Pause music" : "Play music",
+              },
+              h("span", { className: "music-icon" }, isPlaying ? "🎵" : "🔇"),
+              h("span", { className: "music-text" }, isPlaying ? "Music" : "Play"),
+              h(
+                "span",
+                { className: "sound-bars" },
+                h("span", { className: "sound-bar" }),
+                h("span", { className: "sound-bar" }),
+                h("span", { className: "sound-bar" })
+              )
+            )
+          ),
+
+          webglState !== "unsupported" &&
+            h("div", {
+              className: "canvas-container",
+              ref: containerRef,
+              "aria-hidden": "true",
+            }),
+
+          webglState === "checking" &&
+            h(
+              "div",
+              { className: "loading-screen", role: "status", "aria-live": "polite" },
+              h("div", { className: "loading-spark" }),
+              h("p", null, "Preparing your surprise…")
+            ),
+
+          webglState === "unsupported" &&
+            h(
+              "div",
+              { className: "fallback-screen" },
+              h(
+                "div",
+                { className: "fallback-inner" },
+                h("h1", { className: "slide-title" }, slide.title),
+                h("p", { className: "slide-text" }, slide.text),
+                h(
+                  "div",
+                  { className: "slide-buttons" },
+                  slide.buttons.map((b) =>
+                    h(
+                      "button",
+                      {
+                        key: b.id,
+                        className: "btn-primary",
+                        onClick: () => handleButton(b.id),
+                      },
+                      b.label
+                    )
+                  )
+                ),
+                h(Dots, { count: SLIDE_COUNT, current: slideIndex, onSelect: goTo }),
+                h(
+                  "div",
+                  { className: "fallback-nav" },
+                  h(
+                    "button",
+                    {
+                      className: "btn-round",
+                      onClick: () => goTo(slideIndex - 1),
+                      "aria-label": "Previous slide",
+                    },
+                    "‹"
+                  ),
+                  h(
+                    "button",
+                    {
+                      className: "btn-round",
+                      onClick: () => goTo(slideIndex + 1),
+                      "aria-label": "Next slide",
+                    },
+                    "›"
+                  )
+                )
+              )
+            ),
+
+          webglState === "ready" &&
+            h(
+              "div",
+              { className: "overlay-ui" },
+              h(
+                "div",
+                { className: "text-panel" },
+                h(
+                  "div",
+                  { className: "text-inner", key: slide.id },
+                  h("h1", { className: "slide-title" }, slide.title),
+                  h("p", { className: "slide-text" }, slide.text),
+                  slide.buttons.length > 0 &&
+                    h(
+                      "div",
+                      { className: "slide-buttons" },
+                      slide.buttons.map((b) =>
+                        h(
+                          "button",
+                          {
+                            key: b.id,
+                            className: "btn-primary",
+                            onClick: () => handleButton(b.id),
+                            disabled: b.id === "blow" && flamesBlown,
+                          },
+                          b.id === "blow" && flamesBlown ? "Wish made! ✨" : b.label
+                        )
+                      )
+                    )
+                ),
+                h(Dots, { count: SLIDE_COUNT, current: slideIndex, onSelect: goTo })
+              ),
+              h(
+                "button",
+                {
+                  className: "btn-round nav-back",
+                  onClick: () => goTo(slideIndex - 1),
+                  "aria-label": "Previous slide",
+                  disabled: slideIndex === 0,
+                },
+                "‹"
+              ),
+              h(
+                "button",
+                {
+                  className: "btn-round nav-next",
+                  onClick: () => goTo(slideIndex + 1),
+                  "aria-label": "Next slide",
+                  disabled: slideIndex === SLIDE_COUNT - 1,
+                },
+                "›"
+              )
+            )
+        );
+      }
+
+      // Mount
+      const root = ReactDOM.createRoot(document.getElementById("root"));
+      root.render(h(App));
+    </script>
+  </body>
+</html>
