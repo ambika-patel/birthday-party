@@ -310,20 +310,6 @@ body {
   background: linear-gradient(135deg, var(--gold), var(--rose));
 }
 
-/* ---------- Responsive ---------- */
-
-@media (max-width: 520px) {
-  .btn-round {
-    width: 40px;
-    height: 40px;
-    font-size: 1.3rem;
-  }
-  .text-panel {
-    min-height: 50%;
-    padding: 1rem 0.85rem calc(1rem + env(safe-area-inset-bottom, 0px));
-  }
-}
-
 /* ---------- Background Music Toggle Button ---------- */
 .music-control-wrap {
   position: fixed;
@@ -422,7 +408,18 @@ body {
   100% { transform: rotate(12deg) scale(1.15); }
 }
 
+/* ---------- Responsive ---------- */
+
 @media (max-width: 520px) {
+  .btn-round {
+    width: 40px;
+    height: 40px;
+    font-size: 1.3rem;
+  }
+  .text-panel {
+    min-height: 50%;
+    padding: 1rem 0.85rem 1.5rem;
+  }
   .music-control-wrap {
     top: 0.85rem;
     right: 0.85rem;
