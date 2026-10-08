@@ -322,6 +322,8 @@ body {
     min-height: 50%;
     padding: 1rem 0.85rem calc(1rem + env(safe-area-inset-bottom, 0px));
   }
+}
+
 /* ---------- Background Music Toggle Button ---------- */
 .music-control-wrap {
   position: fixed;
